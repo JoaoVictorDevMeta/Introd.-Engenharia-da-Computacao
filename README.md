@@ -34,23 +34,47 @@ O usuário pode alternar entre os dois métodos **em tempo real** (tecla `R` / `
 
 ---
 
+Markdown
 ## Compilação e Execução
+
 ### Pré-requisitos
-- GCC ou Clang
 
-- Raylib (instalado globalmente ou via package manager)
+- **Windows:** [Raylib Installer para Windows](https://www.raylib.com/) (inclui o ambiente **w64devkit** com GCC pré-configurado).
+- **Linux (Alternative):** `sudo apt install libraylib-dev`
 
-Linux (apt):
+### Passo a Passo no Windows (w64devkit)
 
-```bash
-sudo apt install libraylib-dev
-```
-Windows (vcpkg ou manual): Baixe o Raylib e coloque na pasta lib/.
+Como o projeto utiliza múltiplos arquivos fonte organizados em pastas, a compilação deve ser feita utilizando o compilador nativo que acompanha a Raylib.
 
-### Compilação Manual (GCC)
-```bash
-gcc -o phoenix src/*.c -Iinclude -lraylib -lm -lGL -lpthread -ldl -lrt -lX11
-```
+1. Abra o **VS Code** na pasta raiz do projeto.
+2. Abra o terminal integrado (`Ctrl + ~`) e configure o ambiente abrindo o console do `w64devkit`:
+
+   ```bash
+   C:\raylib\w64devkit\w64devkit.exe
+
+3. Compilando pelo w64devkit:
+    ```bash
+    gcc src/main.c -o main.exe -lraylib -lopengl32 -lgdi32 -lwinmm
+    ```
+
+### Passo a Passo no Linux (Ubuntu/Debian)
+
+1. Certifique-se de ter as dependências de desenvolvimento e a Raylib instaladas:
+   ```bash
+   sudo apt update
+   sudo apt install build-essential libraylib-dev libx11-dev libopenal-dev libgl1-mesa-dev libglu1-mesa-dev
+   ```
+
+2. Navegue até a raiz do projeto e execute o comando de compilação:
+    ```bash
+    gcc -o phoenix src/*.c -Iinclude -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+    ```
+
+3. Após gerar o binário, dê a permissão de execução (se necessário) e rode o simulador:
+    ```bash
+    chmod +x phoenix
+    ./phoenix
+    ```
 
 ## Controles
 
