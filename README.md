@@ -157,4 +157,10 @@ flowchart TD
     H --> I[Draw Metrics and Controls]
 ```
 
+## Referências
+
+- [Video Game Physics Tutorial - Part I](https://www.toptal.com/developers/game/video-game-physics-part-i-an-introduction-to-rigid-body-dynamics)
+- [Produto Escalar e Vetorial em C](https://labex.io/pt/tutorials/c-compute-the-dot-and-cross-product-in-c-435158)
+
 ##  Agradecimentos
+
