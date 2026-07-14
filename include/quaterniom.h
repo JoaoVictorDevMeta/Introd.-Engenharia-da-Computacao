@@ -8,6 +8,9 @@ typedef struct {
     double x, y, z; // Parte vetorial (eixo * sin(theta/2)).
 } Quat;
 
+// Adição de Quatérnios
+Quat quat_add(Quat q1, Quat q2);
+
 // Multiplicação de Quatérnios (Combina duas rotações em uma).
 Quat quat_mul(Quat q1, Quat q2);
 
