@@ -11,6 +11,16 @@ Quat quat_add(Quat q1, Quat q2) {
     return res;
 }
 
+// Multiplica um quatérnio por um escalar
+Quat quat_scale(Quat q1, double s){
+   Quat res;
+   res.w = q1.w * s;
+   res.x = q1.x * s;
+   res.y = q1.y * s;
+   res.z = q1.z * s;
+   return res;
+}
+
 // Multiplica dois quatérnios (combina rotações)
 Quat quat_mul(Quat q1, Quat q2) {
     Quat res;
