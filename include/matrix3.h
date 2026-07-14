@@ -13,5 +13,6 @@ Mat3 mat3_rotation_x(double angle);
 Mat3 mat3_rotation_y(double angle);
 Mat3 mat3_rotation_z(double angle);
 
+Mat3 mat3_mul(Mat3 mat_a, Mat3 mat_b);
 
 #endif

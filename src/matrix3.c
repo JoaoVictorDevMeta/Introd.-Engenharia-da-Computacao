@@ -42,3 +42,19 @@ Mat3 mat3_identity(){
 	{0, 0, 1,}
 	}};
 }
+
+Mat3 mat3_mul(Mat3 mat_a, Mat3 mat_b){
+	Mat3 mat_p;
+
+	for (int i = 0; i < 3; i++){
+		for (int j = 0; j < 3; j++){
+			mat_p.m[i][j] = 0;
+			
+			for (int k = 0; k < 3; k++){
+				mat_p.m[i][j] += mat_a[i][k] * mat_b[k][j];
+			}
+		}
+	}
+
+	return mat_p;
+}
