@@ -33,3 +33,12 @@ Mat3 mat3_rotation_z(double angle){
                 {0, 0, 1}
         }};
 }
+
+
+Mat3 mat3_identity(){
+	return (Mat3){{
+	{1, 0, 0},
+	{0, 1, 0,},
+	{0, 0, 1,}
+	}};
+}

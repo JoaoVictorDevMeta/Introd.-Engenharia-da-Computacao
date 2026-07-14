@@ -7,6 +7,7 @@ typedef struct{
 	double m[3][3];
 }Mat3;
 
+Mat3 mat3_identity();
 
 Mat3 mat3_rotation_x(double angle);
 Mat3 mat3_rotation_y(double angle);
