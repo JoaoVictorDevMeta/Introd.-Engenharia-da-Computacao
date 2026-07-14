@@ -93,7 +93,6 @@ Mat3 mat3_inverse(Mat3 a) {
     }
 
     double invDet = 1.0 / det;
-    Mat3 inv;
 
     inv.m[0][0] = (a.m[1][1] * a.m[2][2] - a.m[1][2] * a.m[2][1]) * invDet;
     inv.m[0][1] = (a.m[0][2] * a.m[2][1] - a.m[0][1] * a.m[2][2]) * invDet;
