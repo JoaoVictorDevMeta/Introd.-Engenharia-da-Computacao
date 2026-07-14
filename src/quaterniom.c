@@ -16,7 +16,10 @@ Quat quat_conjugate(Quat q) {
     return (Quat){q.w, -q.x, -q.y, -q.z};
 }
 
-// Normaliza o quatérnio para evitar drifting numérico
+// Normaliza o quatérnio para evitar drifting numérico.
+// drifting numérico é o desvio causado pela limitação
+// de casa decimal em dados double e float.
+// Garanita que a norma seja 1.0.
 Quat quat_normalize(Quat q) {
     double len = sqrt(q.w*q.w + q.x*q.x + q.y*q.y + q.z*q.z);
     if (len < 1e-12) {
@@ -30,4 +33,19 @@ Quat quat_normalize(Quat q) {
 Quat quat_from_omega(Vec3 omega) {
     // Um quatérnio puro possui a parte escalar (w) igual a zero
     return (Quat){0.0, omega.x, omega.y, omega.z};
+}
+
+Quat quat_from_axis_angle(Vec3 axis, double angle) {
+    Quat q;
+    double half_angle = angle * 0.5;
+    double s = sin(half_angle);
+    
+    // É vital que o eixo passado esteja normalizado!
+    // Assumindo que 'axis' já venha normalizado:
+    q.w = cos(half_angle);
+    q.x = axis.x * s;
+    q.y = axis.y * s;
+    q.z = axis.z * s;
+    
+    return q;
 }

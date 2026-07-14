@@ -20,4 +20,7 @@ Quat quat_normalize(Quat q);
 // Converte um vetor velocidade angular (w) em um quatérnio puro para a derivada.
 Quat quat_from_omega(Vec3 omega);
 
+// Cria um quatérnio de rotação a partir de um ângulo (em radianos) e um eixo unitário.
+Quat quat_from_axis_angle(Vec3 axis, double angle);
+
 #endif
