@@ -29,15 +29,18 @@ void InitializeParticles(Particle particle[], int num_particles);
 Vec3 ComputeForceGravidade(Particle particle);
 
 //Lei de Hooke.
-Vec3 ComputeForceMola(Particle particle);
+Vec3 ComputeForceMolaHorizontal(Particle particle, double molaConst);
 
 //Movimento planetário.
-Vec3 ComputeForcePlanetario(Particle particle1, Particle particle2);
+Vec3 ComputeForcePlanetario2(Particle particle1, Particle particle2);
 
 //Roda a simulação de gravidade Euler.
 void RunSimulationGravidadeEuler(int totalSimulationTime, Particle particle[], int num_particles);
 
-//Simulação Runge Kutta.
-void RunSimulationGravidadeRK(int totalSimulationTime, Particle particle[], int num_particles);
+//Simulação da Lei de Hooke
+void RunSimulationMolaHorizontal(int totalSimulationTime, Particle particle[], double molaConst);
+
+//Simulação lei da gravitação
+void RunSimulationGravity2( int totalSimulation, Particle particle[]);
 
 #endif
