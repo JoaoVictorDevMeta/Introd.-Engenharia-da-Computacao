@@ -16,6 +16,7 @@
 | `quat_from_omega`, `quat_from_axis_angle` | ✅ | |
 | Mat3 (`identity`, `rotation_x/y/z`, `mul`, `mul_vec3`, `transpose`, `inverse`, `from_quat`) | ✅ | `src/matriz3x3.c` |
 <<<<<<< HEAD
+<<<<<<< HEAD
 | Testes com asserts (entregável original pedia biblioteca "100% testada com asserts") | ✅ | `tests/testMath.c` |
 
 =======
@@ -25,6 +26,10 @@
 
 ---
 >>>>>>> daf9399 (ADD:organização das tasks e status)
+=======
+| Testes com asserts (entregável original pedia biblioteca "100% testada com asserts") | ✅ | `tests/testMath.c` |
+
+>>>>>>> 98739c9 (ADD: testes de matematica realizados com sucesso)
 
 ## Dupla B — Dinâmica e Integradores (o diferencial do projeto)
 
