@@ -15,11 +15,8 @@
 | Quatérnios (`quat_add`, `quat_scale`, `quat_mul`, `quat_conjugate`, `quat_normalize`) | ✅ | `src/quaterniom.c` |
 | `quat_from_omega`, `quat_from_axis_angle` | ✅ | |
 | Mat3 (`identity`, `rotation_x/y/z`, `mul`, `mul_vec3`, `transpose`, `inverse`, `from_quat`) | ✅ | `src/matriz3x3.c` |
-| Testes com asserts (entregável original pedia biblioteca "100% testada com asserts") | ❌ | `src/test.c` só imprime um resultado manual do produto vetorial, sem `assert` e sem cobrir quaternion/mat3 |
+| Testes com asserts (entregável original pedia biblioteca "100% testada com asserts") | ✅ | `tests/testMath.c` |
 
-**Restante:** escrever suite de testes com `assert.h` cobrindo vec3, quat e mat3 (principalmente `quat_normalize`, `mat3_inverse` e `mat3_from_quat`, que são as funções mais sensíveis a erro numérico).
-
----
 
 ## Dupla B — Dinâmica e Integradores (o diferencial do projeto)
 
