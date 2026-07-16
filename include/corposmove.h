@@ -39,8 +39,10 @@ void PrintRigidBodies(RigidBody rigidBody[]);
 //velocidade linear e angular e com formato de caixa com dimensões aleatórias
 void InitializeRigidBodies(RigidBody rigidBody[]);
 
+//Computa a força e torque no contexto da força da gravidade.
 void ComputeForceAndTorqueGravidade(RigidBody rigidBody[]);
 
+//Simula no caso da força peso.
 void simulaRigidoGravidade(RigidBody rigidBody[]);
 
 #endif;

@@ -2,7 +2,6 @@
 #include <math.h>
 #include "corposmove.h"
 
-//Cálculo do momento de inércia.
 void CalculateBoxInertia(BoxShape boxShape) {
     double m = boxShape.massa;
     double w = boxShape.comprimento;
@@ -19,10 +18,6 @@ void PrintRigidBodies(RigidBody rigidBody[]) {
             rigidBody[0].position.x, rigidBody[0].position.y, rigidBody[0].position.z, rigidBody[0].angle);
     }
 }
-
-// Initializes rigid bodies with random positions and angles and
-// zero linear and angular velocities.
-// They're all initialized with a box shape of random dimensions.
 
 void InitializeRigidBodies(RigidBody rigidBody[]) {
     for (int i = 0; i < 1; i++) {
@@ -46,17 +41,17 @@ void ComputeForceAndTorqueGravidade(RigidBody rigidBody[]) {
     rigidBody[0].force = f;
 
     Vec3 r = (Vec3){rigidBody[0].shape.profundidade / 2,
-        rigidBody[0].shape.comprimento / 2, rigidBody[0].shape.altura/2};
+    rigidBody[0].shape.comprimento / 2, rigidBody[0].shape.altura/2};
 
     rigidBody[0].torque = vec3_product(r, rigidBody[0].force);
 }
 
 void simulaRigidoGravidade(RigidBody rigidBody[]) {
-    float totalSimulationTime = 10; // The simulation will run for
-    // 10 seconds.
-    float currentTime = 0; // This accumulates the time that has
-    // passed.
-    float dt = 1; // Each step will take one second.
+    float totalSimulationTime = 10;
+
+    float currentTime = 0;
+   
+    float dt = 1; 
 
     srand((unsigned)time(NULL));
     InitializeRigidBodies(rigidBody);
