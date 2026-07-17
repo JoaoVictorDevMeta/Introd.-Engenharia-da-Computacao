@@ -1,18 +1,48 @@
 // Documento header para definir as structs e funções relativas
 // ao movimento dos corpos rígidos.
 
-typedef struct {
+#ifndef CORPOSMOVE_H // Include guard, garante leitura única do arquivo.
+#define CORPOSMOVE_H
+
+#include <stdio.h>
+#include <math.h>
+#include "particulasmove.h"
+
+
+
+typedef struct {        // Corpo rígido no formato de bloco retangular.
     double comprimento;
     double altura;
+    double profundidade;
     double massa;
-    double momentOfInertia;
+    Vec3 momentOfInertia;
 } BoxShape;
 
-// Calculates the inertia of a box shape and stores it in the
-// momentOfInertia variable.
-void CalculateBoxInertia(BoxShape boxShape) {
-    double m = boxShape.massa;
-    double w = boxShape.comprimento;
-    double h = boxShape.altura;
-    boxShape.momentOfInertia = m * (w * w + h * h) / 12;
-}
+//Definindo corpo rígido.
+typedef struct {
+    Vec3 position;
+    Vec3 linearVelocity;
+    Vec3 angle; //Ângulos entre os vetores i,j,k.
+    Vec3 angularVelocity;
+    Vec3 force;
+    Vec3 torque;
+    BoxShape shape;
+} RigidBody;
+
+//Cálculo do momento de inercia
+void CalculateBoxInertia(BoxShape boxShape);
+
+//Printa a posição e ângulo do corpo rígido.
+void PrintRigidBodies(RigidBody rigidBody[]);
+
+// Inicializa os corpos rígidos em uma posição aleatória, 
+//velocidade linear e angular e com formato de caixa com dimensões aleatórias
+void InitializeRigidBodies(RigidBody rigidBody[]);
+
+//Computa a força e torque no contexto da força da gravidade.
+void ComputeForceAndTorqueGravidade(RigidBody rigidBody[]);
+
+//Simula no caso da força peso.
+void simulaRigidoGravidade(RigidBody rigidBody[]);
+
+#endif;
