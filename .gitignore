@@ -1,2 +1,10 @@
-test.exe
-main.exe
+# Executáveis
+phoenix
+testes
+*.exe
+
+# Arquivos objeto
+*.o
+
+# Pastas de build
+build/

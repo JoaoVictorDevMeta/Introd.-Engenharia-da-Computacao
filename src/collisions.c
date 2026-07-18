@@ -37,10 +37,21 @@ void calculateBoxVertices(RigidBody *part, Vec3 vertices[8])
     double hy = part->shape.profundidade / 2;
     double hz = part->shape.altura / 2;
 
-    Vec3 vertices[8] = {
-        {-hx, -hy, -hz}, {hx, -hy, -hz}, {-hx, -hy, hz}, {hx, -hy, hz}, {-hx, hy, -hz}, {hx, hy, -hz}, {-hx, hy, hz}, {hx, hy, hz}};
+    vertices[0] = (Vec3){-hx, -hy, -hz};
+    vertices[1] = (Vec3){hx, -hy, -hz};
+    vertices[2] = (Vec3){-hx, -hy, hz};
+    vertices[3] = (Vec3){hx, -hy, hz};
+    vertices[4] = (Vec3){-hx, hy, -hz};
+    vertices[5] = (Vec3){hx, hy, -hz};
+    vertices[6] = (Vec3){-hx, hy, hz};
+    vertices[7] = (Vec3){hx, hy, hz};
 
-    double m[4][4] = {{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}}};
+    double m[4][4] = {
+        {1, 0, 0, 0},
+        {0, 1, 0, 0},
+        {0, 0, 1, 0},
+        {0, 0, 0, 1}
+    };
 
     // Converte os angulos de graus para radianos
     double radX = part->angle.x * 0.0174533;
