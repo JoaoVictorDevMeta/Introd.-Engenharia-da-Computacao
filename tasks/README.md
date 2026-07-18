@@ -48,12 +48,12 @@
 | Item | Status |
 | -- | -- |
 | Detecção Esfera-Plano | ❌ |
-| Detecção Esfera-Esfera | ❌ |
-| Geração de dados de contato (ponto, normal, penetração) | ❌ |
-| Resposta de impulso linear/angular | ❌ |
-| Correção posicional (slop) | ❌ |
+| Detecção Esfera-Esfera | 🟡 |
+| Geração de dados de contato (ponto, normal, penetração) | 🟡 |
+| Resposta de impulso linear/angular | 🟡 |
+| Correção posicional (slop) | 🟡 |
 
-**Restante:** módulo inteiro não iniciado — nenhum arquivo `collision.*` existe no repositório.
+**Restante:** Módulo inteiro ainda precisa ser válidado por meio de testes, após isso é posível marcar como concluído. Detecção esfera-plano ainda precisa ser feito (simples). Resposta de impulso angular tambem ainda precisa ser implementada.
 
 ---
 
