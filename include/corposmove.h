@@ -8,8 +8,6 @@
 #include <math.h>
 #include "particulasmove.h"
 
-
-
 typedef struct {        // Corpo rígido no formato de bloco retangular.
     double comprimento;
     double altura;
@@ -30,19 +28,19 @@ typedef struct {
 } RigidBody;
 
 //Cálculo do momento de inercia
-void CalculateBoxInertia(BoxShape boxShape);
+void CalculateBoxInertia(BoxShape *boxShape);
 
 //Printa a posição e ângulo do corpo rígido.
-void PrintRigidBodies(RigidBody rigidBody[]);
+void PrintRigidBodies(RigidBody rigidBody[], int numBodies);
 
 // Inicializa os corpos rígidos em uma posição aleatória, 
 //velocidade linear e angular e com formato de caixa com dimensões aleatórias
-void InitializeRigidBodies(RigidBody rigidBody[]);
+void InitializeRigidBodies(RigidBody rigidBody[], int numBodies);
 
 //Computa a força e torque no contexto da força da gravidade.
-void ComputeForceAndTorqueGravidade(RigidBody rigidBody[]);
+void ComputeForceAndTorqueGravidade(RigidBody rigidBody[], int numBodies);
 
 //Simula no caso da força peso.
-void simulaRigidoGravidade(RigidBody rigidBody[]);
+void simulaRigidoGravidade(RigidBody rigidBody[], int numBodies);
 
-#endif;
+#endif

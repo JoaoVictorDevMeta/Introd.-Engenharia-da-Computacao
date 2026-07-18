@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <math.h>
 #include "particulasmove.h"
 #include "vector3d.h"
@@ -40,7 +42,7 @@ Vec3 ComputeForceMolaHorizontal(Particle particle, double molaConst){
 Vec3 ComputeForcePlanetario2(Particle particle1, Particle particle2){
 
     Vec3 r = vec3_sub(particle2.position, particle1.position);
-    double normaR = vec3_lenght(r);
+    double normaR = vec3_length(r);
     double G =  6.674*pow(10,-11);
     return (Vec3){((G * (particle1.massa * particle2.massa))/pow(normaR,3))*r.x,((G * (particle1.massa * particle2.massa))/pow(normaR,3))*r.y, ((G * (particle1.massa * particle2.massa))/pow(normaR,3))*r.z };
 
@@ -123,62 +125,47 @@ void RunSimulationMolaHorizontal(int totalSimulationTime, Particle particle[], d
 
 }
 
-//void RunSimulationGravity2( int totalSimulation, Particle particle[]){
-    
-   // particle[0].position.x = 0;
-  //  particle[0].position.y = 0;
-//    particle[0].position.z = 0;
+//------------------- Simulação Lei da Gravitação (2 corpos) ---------------
+// Órbita gravitacional entre duas partículas, força calculada via
+// ComputeForcePlanetario2 (F = G*m1*m2/r^2, na direção de r).
+void RunSimulationGravity2(int totalSimulationTime, Particle particle[]){
 
- //Vec3 r = vec3_sub(particle[1].position, particle[0].position);
-    //Vec3 vRel; //Derivada da r, isto é, velocidade relativa.
-    //double normaR = vec3_lenght(r);
-    //double G =  6.674*pow(10,-11);    
-    //double momentoAngular; //= vec3_normalize(vec3_product(r,));
-
-   //double currentTime = 0; // This accumulates the time that has
+    double currentTime = 0; // This accumulates the time that has
     // passed.
-   //double dt = 1; // Each step will take one second.
+    double dt = 1; // Each step will take one second.
 
-    //srand((unsigned)time(NULL));
-    //InitializeParticles(particle, 2);
-    //PrintParticles(particle, 2);
+    srand((unsigned)time(NULL));
+    InitializeParticles(particle, 2);
 
-    
-  //  while (currentTime < totalSimulationTime) {
-    
-            
-            //Vec3 force = ComputeForcePlanetario2(particle[0],particle[1]);
-            
-            //for(int i = 0; i <2; i++){
+    // Massas bem maiores que 1 kg para a força gravitacional ser perceptível
+    // (com m=1 kg, G*m1*m2 é desprezível e a "órbita" nunca sai do lugar).
+    particle[0].massa = 5.972e24; // ~massa da Terra
+    particle[1].massa = 7.348e22; // ~massa da Lua
+    particle[0].position = (Vec3){0, 0, 0};
+    particle[1].position = (Vec3){384400000, 0, 0}; // ~distância Terra-Lua (m)
+    particle[0].velocity = (Vec3){0, 0, 0};
+    particle[1].velocity = (Vec3){0, 1022, 0}; // velocidade orbital aproximada (m/s)
 
+    PrintParticles(particle, 2);
 
-            //Vec3 acceleration = (Vec3){force.x /
-              //  particle[i].massa, force.y / particle[1].massa, force.z/particle[1].massa};
+    while (currentTime < totalSimulationTime) {
 
-            //particle[i].velocity.x += acceleration.x * dt;
-            //particle[i].velocity.y += acceleration.y * dt;
-          //  particle[i].velocity.z += acceleration.z * dt;
-            
-        //}        
+        // Força que particle[1] exerce sobre particle[0], e a reação (Newton III)
+        Vec3 forceOn0 = ComputeForcePlanetario2(particle[0], particle[1]);
+        Vec3 forceOn1 = ComputeForcePlanetario2(particle[1], particle[0]);
 
-        //vRel = vec3_sub(particle[1].position, particle[0].position);
-        //momentoAngular = vec3_normalize(vec3_product(v,vRel));
-        //double p = (pow(momentoAngular,2))/(G*particle[0].massa); 
-        //double e = ((pow(vRel,2))/2)-((G*particle[0].massa)/2);
-        //double b = sqrt(1+((2*e*pow(momentoAngular,2))/(pow(G*particle[0].massa,2))));
-        //double theta = acos((1/b)*((p/nomraR)))
+        Vec3 acceleration0 = (Vec3){forceOn0.x / particle[0].massa,
+            forceOn0.y / particle[0].massa, forceOn0.z / particle[0].massa};
+        Vec3 acceleration1 = (Vec3){forceOn1.x / particle[1].massa,
+            forceOn1.y / particle[1].massa, forceOn1.z / particle[1].massa};
 
-        //for(int i = 0; i<2; i++){
+        particle[0].velocity = vec3_add(particle[0].velocity, vec3_scale(acceleration0, dt));
+        particle[1].velocity = vec3_add(particle[1].velocity, vec3_scale(acceleration1, dt));
 
-          //  particle[i].velocity.x
+        particle[0].position = vec3_add(particle[0].position, vec3_scale(particle[0].velocity, dt));
+        particle[1].position = vec3_add(particle[1].position, vec3_scale(particle[1].velocity, dt));
 
-        //}
-
-    //    PrintParticles(particle, 2);
-      //  currentTime += dt;
-    //} 
-
-
-   
-
-//}
+        PrintParticles(particle, 2);
+        currentTime += dt;
+    }
+}

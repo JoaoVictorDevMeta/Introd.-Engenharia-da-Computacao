@@ -1,26 +1,29 @@
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
+#include <time.h>
 #include "corposmove.h"
 
-void CalculateBoxInertia(BoxShape boxShape) {
-    double m = boxShape.massa;
-    double w = boxShape.comprimento;
-    double h = boxShape.altura;
-    double d = boxShape. profundidade;
-    boxShape.momentOfInertia.x = (1/12) * m * (pow(h,2)+pow(d,2));
-    boxShape.momentOfInertia.y = (1/12) * m * (pow(w,2)+pow(d,2));
-    boxShape.momentOfInertia.z = (1/12) * m * (pow(w,2)+pow(h,2));
+void CalculateBoxInertia(BoxShape *boxShape) {
+    double m = boxShape -> massa;
+    double w = boxShape -> comprimento;
+    double h = boxShape -> altura;
+    double d = boxShape -> profundidade;
+    boxShape -> momentOfInertia.x = (1.0/12.0) * m * (pow(h,2)+pow(d,2));
+    boxShape -> momentOfInertia.y = (1.0/12.0) * m * (pow(w,2)+pow(d,2));
+    boxShape -> momentOfInertia.z = (1.0/12.0) * m * (pow(w,2)+pow(h,2));
 }
 
-void PrintRigidBodies(RigidBody rigidBody[]) {
-    for (int i = 0; i < 1; i++) {
-        printf("Corpo[%i] p = (%.2lf, %.2lf, %.2lf), a = %.2lf\n", i,
-            rigidBody[0].position.x, rigidBody[0].position.y, rigidBody[0].position.z, rigidBody[0].angle);
+void PrintRigidBodies(RigidBody rigidBody[], int numBodies) {
+    for (int i = 0; i < numBodies; i++) {
+        printf("Corpo[%i] p = (%.2lf, %.2lf, %.2lf), a = (%.2lf, %.2lf, %.2lf)\n", i,
+            rigidBody[i].position.x, rigidBody[i].position.y, rigidBody[i].position.z,
+            rigidBody[i].angle.x, rigidBody[i].angle.y, rigidBody[i].angle.z);
     }
 }
 
-void InitializeRigidBodies(RigidBody rigidBody[]) {
-    for (int i = 0; i < 1; i++) {
+void InitializeRigidBodies(RigidBody rigidBody[], int numBodies) {
+    for (int i = 0; i < numBodies; i++) {
         rigidBody[i].position = (Vec3){rand() % 50, rand() % 50, rand() % 50};
         rigidBody[i].angle = (Vec3){((rand() % 360) / 360.f * 3.1415 * 2),((rand() % 360) / 360.f * 3.1415 * 2),((rand() % 360) / 360.f * 3.1415 * 2)};
         rigidBody[i].linearVelocity = (Vec3){0, 0, 0};
@@ -31,22 +34,25 @@ void InitializeRigidBodies(RigidBody rigidBody[]) {
         shape.comprimento = 1 + rand() % 2;
         shape.altura = 1 + rand() % 2;
         shape.profundidade = 1 + rand() % 2;
-        CalculateBoxInertia(shape);
+        CalculateBoxInertia(&shape);
         rigidBody[i].shape = shape;
     }
 }
 
-void ComputeForceAndTorqueGravidade(RigidBody rigidBody[]) {
-    Vec3 f = (Vec3){0, 0, 9.81 * 10};
-    rigidBody[0].force = f;
+void ComputeForceAndTorqueGravidade(RigidBody rigidBody[], int numBodies) {
+    for (int i = 0; i < numBodies; i++) {
+        Vec3 f = (Vec3){0, 0, 9.81 * rigidBody[i].shape.massa};
+        rigidBody[i].force = f;
 
-    Vec3 r = (Vec3){rigidBody[0].shape.profundidade / 2,
-    rigidBody[0].shape.comprimento / 2, rigidBody[0].shape.altura/2};
+        Vec3 r = (Vec3){rigidBody[i].shape.profundidade / 2.0,
+                        rigidBody[i].shape.comprimento / 2.0, 
+                        rigidBody[i].shape.altura / 2.0};
 
-    rigidBody[0].torque = vec3_product(r, rigidBody[0].force);
+        rigidBody[i].torque = vec3_product(r, rigidBody[i].force);
+    }
 }
 
-void simulaRigidoGravidade(RigidBody rigidBody[]) {
+void simulaRigidoGravidade(RigidBody rigidBody[], int numBodies) {
     float totalSimulationTime = 10;
 
     float currentTime = 0;
@@ -54,22 +60,22 @@ void simulaRigidoGravidade(RigidBody rigidBody[]) {
     float dt = 1; 
 
     srand((unsigned)time(NULL));
-    InitializeRigidBodies(rigidBody);
-    PrintRigidBodies(rigidBody);
+    InitializeRigidBodies(rigidBody, numBodies);
+    PrintRigidBodies(rigidBody, numBodies);
 
     while (currentTime < totalSimulationTime) {
+        // Atualiza forças e torques de todos os corpos antes de integrar
+        ComputeForceAndTorqueGravidade(rigidBody, numBodies);
 
-        for (int i = 0; i < 1; ++i) {
-    
-            ComputeForceAndTorque(rigidBody);
+        for (int i = 0; i < numBodies; ++i) {
 
             Vec3 linearAcceleration =
                 (Vec3){rigidBody[i].force.x / rigidBody[i].shape.massa,
-                rigidBody[i].force.y / rigidBody[i].shape.massa, rigidBody[i].force.x/rigidBody[i].shape.massa};
+                rigidBody[i].force.y / rigidBody[i].shape.massa, rigidBody[i].force.z/rigidBody[i].shape.massa};
 
             rigidBody[i].linearVelocity.x += linearAcceleration.x * dt;
             rigidBody[i].linearVelocity.y += linearAcceleration.y * dt;
-            rigidBody[i].linearVelocity.z += linearAcceleration.y * dt;
+            rigidBody[i].linearVelocity.z += linearAcceleration.z * dt;
 
             rigidBody[i].position.x += rigidBody[i].linearVelocity.x * dt;
             rigidBody[i].position.y += rigidBody[i].linearVelocity.y * dt;
@@ -87,7 +93,7 @@ void simulaRigidoGravidade(RigidBody rigidBody[]) {
             rigidBody[i].angle.z += rigidBody[i].angularVelocity.z * dt;
         }
 
-        PrintRigidBodies(rigidBody);
+        PrintRigidBodies(rigidBody, numBodies);
         currentTime += dt;
     }
 }
