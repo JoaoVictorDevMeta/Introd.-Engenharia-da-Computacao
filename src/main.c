@@ -137,6 +137,12 @@ int main(void) {
                 // Grade de referencia
                 DrawGrid(50, 2.0f);
 
+		// Eixo X:
+		DrawCylinderEx((Vector3){ -50.0f, 0.0f, 0.0f }, (Vector3){ 50.f, 0.0f, 0.0f }, 0.05f, 0.05f, 8, RED);
+
+                // Eixo Z:
+                DrawCylinderEx((Vector3){ 0.0f, 0.0f, -50.0f }, (Vector3){ 0.0f, 0.0f, 50.0f }, 0.05f, 0.05f, 8, BLUE);
+
                 // Rastro EULER (vermelho, mais grosso)
                 for (int i = 1; i < t_count; i++) {
                     int curr = (t_idx - i + TRAIL_LENGTH) % TRAIL_LENGTH;
