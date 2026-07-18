@@ -14,9 +14,7 @@ typedef struct
     RigidBody *body; // Referencia para instancia original
 
     Vec3 pos;
-    int radius;
-    Vec3 min;
-    Vec3 max;
+    double radius;
 } AABBsphere;
 
 AABBcube createHitBoxCube(RigidBody *part);

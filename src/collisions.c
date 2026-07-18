@@ -1,4 +1,5 @@
 #include "collisions.h"
+#include <math.h>
 
 AABBcube createHitBoxCube(RigidBody *part)
 {
@@ -26,16 +27,6 @@ AABBsphere createHitBoxSphere(RigidBody *part)
         part->position.z};
     hitbox.radius = part->shape.comprimento;
 
-    hitbox.min = (Vec3){
-        hitbox.pos.x - hitbox.radius,
-        hitbox.pos.y - hitbox.radius,
-        hitbox.pos.z - hitbox.radius};
-    hitbox.max = (Vec3){
-        hitbox.pos.x + hitbox.radius,
-        hitbox.pos.y + hitbox.radius,
-        hitbox.pos.z + hitbox.radius};
-
-    return hitbox;
     return hitbox;
 }
 
@@ -62,18 +53,10 @@ int testAABBoverlapCube(AABBcube *a, AABBcube *b)
 
 int testAABBoverlapSphere(AABBsphere *a, AABBsphere *b)
 {
-    double d1x = b->min.x - a->max.x;
-    double d2x = a->min.x - b->max.x;
-    double d1y = b->min.y - a->max.y;
-    double d2y = a->min.y - b->max.y;
-    double d1z = b->min.z - a->max.z;
-    double d2z = a->min.z - b->max.z;
+    double dAB = vec3_distance(a->pos, b->pos);
+    double radiusSum = a->radius + b->radius;
 
-    if (d1x > 0.0f || d1y > 0.0f || d1z > 0.0f)
-    {
-        return 0;
-    }
-    if (d2x > 0.0f || d2y > 0.0f || d2z > 0.0f)
+    if (dAB > radiusSum)
     {
         return 0;
     }
