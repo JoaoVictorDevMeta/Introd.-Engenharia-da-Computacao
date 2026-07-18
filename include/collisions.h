@@ -7,6 +7,8 @@ typedef struct
 
     Vec3 min;
     Vec3 max;
+
+    Vec3 vertices[8];
 } AABBcube;
 
 typedef struct
@@ -16,6 +18,8 @@ typedef struct
     Vec3 pos;
     double radius;
 } AABBsphere;
+
+void calculateBoxVertices(RigidBody *part, Vec3 vertices[8]);
 
 AABBcube createHitBoxCube(RigidBody *part);
 AABBsphere createHitBoxSphere(RigidBody *part);
