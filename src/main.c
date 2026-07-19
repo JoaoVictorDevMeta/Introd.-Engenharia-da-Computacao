@@ -62,6 +62,8 @@ Vector3 toRaylib(Vec3 v) {
 int main(void) {
     const int screenW = 1200;
     const int screenH = 800;
+    const int gridSize = 50;
+
     InitWindow(screenW, screenH, "Phoenix Engine — Euler vs RK4");
     SetTargetFPS(60);
 
@@ -135,13 +137,13 @@ int main(void) {
                 DrawSphereWires((Vector3){0,0,0}, 1.8f, 16, 16, ORANGE);
 
                 // Grade de referencia
-                DrawGrid(50, 2.0f);
+                DrawGrid(gridSize, 2.0f);
 
 		// Eixo X:
-		DrawCylinderEx((Vector3){ -50.0f, 0.0f, 0.0f }, (Vector3){ 50.f, 0.0f, 0.0f }, 0.05f, 0.05f, 8, RED);
+		DrawCylinderEx((Vector3){ -gridSize, 0.0f, 0.0f }, (Vector3){ gridSize, 0.0f, 0.0f }, 0.05f, 0.05f, 8, RED);
 
                 // Eixo Z:
-                DrawCylinderEx((Vector3){ 0.0f, 0.0f, -50.0f }, (Vector3){ 0.0f, 0.0f, 50.0f }, 0.05f, 0.05f, 8, BLUE);
+                DrawCylinderEx((Vector3){ 0.0f, 0.0f, -gridSize}, (Vector3){ 0.0f, 0.0f, gridSize }, 0.05f, 0.05f, 8, BLUE);
 
                 // Rastro EULER (vermelho, mais grosso)
                 for (int i = 1; i < t_count; i++) {
