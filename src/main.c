@@ -72,12 +72,16 @@ int main(void) {
 
     // --- Camera 3D orbital ---
     Camera3D camera = {0};
-    camera.position   = (Vector3){0.0f, 25.0f, 50.0f};
+    float cameraAngle = 0.0f;
+    float cameraDistanceZ = 50.0f;
+    
+    camera.position   = (Vector3){0.0f, 25.0f, cameraDistanceZ};
     camera.target     = (Vector3){0.0f, 0.0f,  0.0f};
     camera.up         = (Vector3){0.0f, 1.0f,  0.0f};
     camera.fovy       = 60.0f;
     camera.projection = CAMERA_PERSPECTIVE;
-
+   
+    
     // --- Estado inicial (IDENTICO pros dois integradores) ---
     State st_euler = {0};
     State st_rk4   = {0};
@@ -128,7 +132,17 @@ int main(void) {
         }
 
         // ----- CAMERA -----
-        UpdateCamera(&camera, CAMERA_ORBITAL);
+        Vector2 mouseDelta = GetMouseDelta();
+        if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)){
+            if (mouseDelta.x != 0.0f) {
+                int sinal = (mouseDelta.x > 0) ? 1 : -1;
+                
+                cameraAngle += 0.05f * sinal;
+                camera.position.x = camera.target.x + cosf(cameraAngle) * cameraDistanceZ;
+                camera.position.z = camera.target.z + sinf(cameraAngle) * cameraDistanceZ;
+
+            }
+        }
 
         // ----- RENDER -----
         BeginDrawing();
