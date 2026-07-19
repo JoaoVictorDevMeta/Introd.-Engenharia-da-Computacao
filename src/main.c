@@ -172,6 +172,25 @@ int main(void) {
                 DrawSphere(toRaylib(st_rk4.position),   0.6f, BLUE);
 
             EndMode3D();
+	    	// Marcadores para o Eixo X (Positivos)
+		for (int i = -gridSize; i <= gridSize; i += 10) {
+	  		Vector3 worldPos = { (float)i, 0.0f, 0.0f };
+    			Vector2 screenPos = GetWorldToScreen(worldPos, camera);
+
+			if (screenPos.x > 0 && i != 0) {
+    				DrawText(TextFormat("%i", i), (int)screenPos.x, (int)screenPos.y, 20, gridColor);
+    			}
+		}
+
+		// Marcadores para o Eixo Z (Positivos)
+		for (int i = -gridSize; i <= gridSize; i += 10) {
+    			Vector3 worldPos = { 0.0f, 0.0f, (float)i };
+    			Vector2 screenPos = GetWorldToScreen(worldPos, camera);
+
+			if (screenPos.x > 0 && i != 0) {
+        			DrawText(TextFormat("%i", i), (int)screenPos.x, (int)screenPos.y, 20, gridColor);
+    			}
+		}
 
             // ----- UI 2D (texto por cima) -----
             DrawText("PHOENIX PHYSICS ENGINE", 10, 10, 24, GREEN);
