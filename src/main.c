@@ -62,7 +62,10 @@ Vector3 toRaylib(Vec3 v) {
 int main(void) {
     const int screenW = 1200;
     const int screenH = 800;
+
+    // Variáveis do Grid
     const int gridSize = 50;
+    Color gridColor = Fade(GRAY, 0.3);
 
     InitWindow(screenW, screenH, "Phoenix Engine — Euler vs RK4");
     SetTargetFPS(60);
@@ -137,8 +140,13 @@ int main(void) {
                 DrawSphereWires((Vector3){0,0,0}, 1.8f, 16, 16, ORANGE);
 
                 // Grade de referencia
-                DrawGrid(gridSize, 2.0f);
+                //DrawGrid(gridSize, 2.0f);
+		for (int i = -gridSize; i <= gridSize; i+=2){
 
+		DrawLine3D((Vector3){ (float)i, 0, -gridSize}, (Vector3){ (float)i, 0, gridSize}, gridColor);
+		DrawLine3D((Vector3){ -gridSize, 0, (float)i}, (Vector3){ gridSize, 0, (float)i}, gridColor);
+
+		}
 		// Eixo X:
 		DrawCylinderEx((Vector3){ -gridSize, 0.0f, 0.0f }, (Vector3){ gridSize, 0.0f, 0.0f }, 0.05f, 0.05f, 8, RED);
 
