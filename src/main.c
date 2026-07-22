@@ -1,129 +1,235 @@
 #include "raylib.h"
+#include <stdio.h>
+#include <math.h>
+#include "integration.h"
+#include "vector3d.h"
+#include "quaterniom.h"
+
+#define TRAIL_LENGTH 300
+#define DT_PHYSICS   0.08   // Passo GRANDE propositalmente pra evidenciar erro do Euler
 
 // =================================================================
-// CODIGO PARA TESTE DE RAYLIB 3D COM FISICA SIMPLES DE BOLA
+// LEI DA FISICA: Orbita gravitacional (campo central)
+// F = -GM/r^2, apontando pro centro (0,0,0)
 // =================================================================
+void derivOrbita(const State *state, Derivative *d) {
+    // Taxa de variacao da posicao = velocidade
+    d->dPosition = state->velocity;
 
+    // Vetor posicao em relacao ao centro
+    Vec3 r = state->position;
+    double dist = vec3_length(r);
+
+    // Evita divisao por zero se passar muito perto
+    if (dist < 0.5) dist = 0.5;
+
+    // Aceleracao: a = -GM/r^3 * r  (forca sempre puxa pro centro)
+    double GM = 800.0;
+    Vec3 accel = vec3_scale(r, -GM / (dist * dist * dist));
+    d->dVelocity = accel;
+
+    // Sem rotacao por enquanto (particula pontual)
+    d->dOrientation = quat_scale(
+        quat_mul(quat_from_omega(state->angularVelocity), state->orientation),
+        0.5
+    );
+    d->dAngularVelocity = (Vec3){0.0, 0.0, 0.0};
+}
+
+// =================================================================
+// ENERGIA TOTAL (cinetica + potencial) — usada pra medir estabilidade
+// E = 0.5*v^2 - GM/r   (massa = 1)
+// Se o integrador for bom, essa energia deve ficar CONSTANTE.
+// =================================================================
+double computeEnergy(const State *s) {
+    double v2 = vec3_dot(s->velocity, s->velocity);
+    double r  = vec3_length(s->position);
+    if (r < 0.5) r = 0.5;
+    double GM = 800.0;
+    return 0.5 * v2 - GM / r;
+}
+
+// =================================================================
+// CONVERSOR: nosso Vec3 (engine) -> Vector3 (Raylib pra desenhar)
+// =================================================================
+Vector3 toRaylib(Vec3 v) {
+    return (Vector3){(float)v.x, (float)v.y, (float)v.z};
+}
+
+// =================================================================
+// MAIN
+// =================================================================
 int main(void) {
-    // Mantém o desvio de segurança do diretório
-    ChangeDirectory("C:/"); 
+    const int screenW = 1200;
+    const int screenH = 800;
 
-    const int screenWidth = 800;
-    const int screenHeight = 600;
-    
-    InitWindow(screenWidth, screenHeight, "Phoenix Physics Engine - 3D BALL CODES");
+    // Variáveis do Grid
+    const int gridSize = 50;
+    Color gridColor = Fade(GRAY, 0.3);
+
+    InitWindow(screenW, screenH, "Phoenix Engine — Euler vs RK4");
     SetTargetFPS(60);
-    
-    // --- CONFIGURAÇÃO DA CÂMERA 3D (MÉTODO SEGURO) ---
-    Camera3D camera = { 0 };
-    camera.position = (Vector3){ 0.0f, 8.0f, 15.0f }; // Posicionada um pouco mais alta e distante
-    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-    camera.fovy = 60.0f;
-    camera.projection = CAMERA_PERSPECTIVE;
-    
-    // --- PROPRIEDADES DA BOLA (FÍSICA) ---
-    Vector3 ballPosition = { 0.0f, 5.0f, 0.0f };
-    Vector3 ballVelocity = { 0.0f, 0.0f, 0.0f };
-    float ballRadius = 0.4f;
-    
-    // Variáveis do ambiente físico
-    float gravity = -0.015f;      // Força constante para baixo (eixo Y)
-    float bounce = 0.75f;        // Elasticidade (perde 25% da força ao colidir)
-    float airResistance = 0.99f; // Atrito do ar para desacelerar a bola gradualmente
-    float pushForce = 0.01f;     // Força aplicada ao pressionar as teclas de movimento
 
-    // --- PROPRIEDADES DA PLATAFORMA ---
-    Vector3 platformPosition = { 0.0f, -0.1f, 0.0f };
-    Vector3 platformSize = { 12.0f, 0.2f, 12.0f }; // Uma grande mesa quadrada 3D
+    // --- Camera 3D orbital ---
+    Camera3D camera = {0};
+    float cameraAngle = 0.0f;
+    float cameraDistanceZ = 50.0f;
+    
+    camera.position   = (Vector3){0.0f, 25.0f, cameraDistanceZ};
+    camera.target     = (Vector3){0.0f, 0.0f,  0.0f};
+    camera.up         = (Vector3){0.0f, 1.0f,  0.0f};
+    camera.fovy       = 60.0f;
+    camera.projection = CAMERA_PERSPECTIVE;
+   
+    
+    // --- Estado inicial (IDENTICO pros dois integradores) ---
+    State st_euler = {0};
+    State st_rk4   = {0};
+
+    Vec3 pos0 = {18.0, 0.0, 0.0};   // Comeca longe do centro
+    Vec3 vel0 = {0.0, 0.0, 7.5};    // Velocidade tangencial -> orbita!
+
+    st_euler.position = pos0;  st_euler.velocity = vel0;
+    st_euler.orientation = (Quat){1.0, 0.0, 0.0, 0.0};
+
+    st_rk4.position = pos0;  st_rk4.velocity = vel0;
+    st_rk4.orientation = (Quat){1.0, 0.0, 0.0, 0.0};
+
+    // --- Rastro (trail) circular ---
+    Vector3 trail_euler[TRAIL_LENGTH] = {0};
+    Vector3 trail_rk4[TRAIL_LENGTH]   = {0};
+    int t_count = 0;
+    int t_idx   = 0;
+
+    int running = 1;   // Pausa com espaco
 
     while (!WindowShouldClose()) {
-        
-        // 1. CONTROLE DA CÂMERA (Setas do Teclado)
-        Vector3 camMove = { 0 };
-        Vector3 camRot = { 0 };
-        
-        if (IsKeyDown(KEY_RIGHT)) camRot.x = 1.5f;
-        if (IsKeyDown(KEY_LEFT))  camRot.x = -1.5f;
-        if (IsKeyDown(KEY_UP))    camRot.y = -1.5f;
-        if (IsKeyDown(KEY_DOWN))  camRot.y = 1.5f;
-        
-        UpdateCameraPro(&camera, camMove, camRot, 0.0f);
-
-        // 2. CONTROLE DA BOLA (Teclas W, A, S, D)
-        // Aplica impulsos nos eixos X (esquerda/direita) e Z (frente/trás)
-        if (IsKeyDown(KEY_D)) ballVelocity.x += pushForce;
-        if (IsKeyDown(KEY_A)) ballVelocity.x -= pushForce;
-        if (IsKeyDown(KEY_W)) ballVelocity.z -= pushForce;
-        if (IsKeyDown(KEY_S)) ballVelocity.z += pushForce;
-        if (IsKeyPressed(KEY_SPACE) && ballPosition.y <= (platformPosition.y + platformSize.y/2 + ballRadius + 0.05f)) {
-            ballVelocity.y = 0.4f; // Pulo! Só funciona se estiver perto do chão
+        // ----- INPUT -----
+        if (IsKeyPressed(KEY_SPACE)) running = !running;
+        if (IsKeyPressed(KEY_R)) {
+            // Reinicia ambos pro estado inicial
+            st_euler.position = pos0;  st_euler.velocity = vel0;
+            st_rk4.position   = pos0;  st_rk4.velocity   = vel0;
+            t_count = 0;  t_idx = 0;
         }
 
-        // 3. PROCESSAMENTO DA FÍSICA
-        ballVelocity.y += gravity;             // Aplica gravidade no eixo vertical
-        ballVelocity.x *= airResistance;       // Amortece velocidade no eixo X
-        ballVelocity.z *= airResistance;       // Amortece velocidade no eixo Z
-        
-        // Atualiza a posição 3D baseada nas velocidades
-        ballPosition.x += ballVelocity.x;
-        ballPosition.y += ballVelocity.y;
-        ballPosition.z += ballVelocity.z;
+        // ----- FISICA (passo fixo) -----
+        if (running) {
+            // Varios sub-passos por frame pra suavidade visual
+            int sub = 4;
+            double dt_step = DT_PHYSICS / sub;
 
-        // 4. DETECÇÃO DE COLISÃO (Bola vs Plataforma)
-        float halfWidth = platformSize.x / 2.0f;
-        float halfDepth = platformSize.z / 2.0f;
-        float platformTop = platformPosition.y + (platformSize.y / 2.0f);
+            for (int i = 0; i < sub; i++) {
+                euler(&st_euler, dt_step, derivOrbita);
+                rk4(&st_rk4, dt_step, derivOrbita);
+            }
 
-        // Verifica se a bola está dentro dos limites horizontais da mesa/plataforma
-        if ((ballPosition.x >= -halfWidth && ballPosition.x <= halfWidth) &&
-            (ballPosition.z >= -halfDepth && ballPosition.z <= halfDepth)) {
-            
-            // Verifica se a base da bola cruzou a superfície superior da mesa
-            if (ballPosition.y - ballRadius <= platformTop) {
-                ballPosition.y = platformTop + ballRadius; // Impede a bola de afundar
-                ballVelocity.y = -ballVelocity.y * bounce; // Inverte o eixo Y aplicando o quique
+            // Guarda posicao no rastro (buffer circular)
+            trail_euler[t_idx] = toRaylib(st_euler.position);
+            trail_rk4[t_idx]   = toRaylib(st_rk4.position);
+            t_idx = (t_idx + 1) % TRAIL_LENGTH;
+            if (t_count < TRAIL_LENGTH) t_count++;
+        }
+
+        // ----- CAMERA -----
+        Vector2 mouseDelta = GetMouseDelta();
+        if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)){
+            if (mouseDelta.x != 0.0f) {
+                int sinal = (mouseDelta.x > 0) ? 1 : -1;
+                
+                cameraAngle += 0.05f * sinal;
+                camera.position.x = camera.target.x + cosf(cameraAngle) * cameraDistanceZ;
+                camera.position.z = camera.target.z + sinf(cameraAngle) * cameraDistanceZ;
+
             }
         }
 
-        // Sistema de segurança: Se a bola cair para fora da plataforma, ela ressurge no alto
-        if (ballPosition.y < -10.0f) {
-            ballPosition = (Vector3){ 0.0f, 6.0f, 0.0f };
-            ballVelocity = (Vector3){ 0.0f, 0.0f, 0.0f };
-        }
-
-        // 5. RENDERIZAÇÃO
+        // ----- RENDER -----
         BeginDrawing();
-            ClearBackground(BLACK);
-            
+            ClearBackground((Color){5, 5, 15, 255});  // Azul-muito-escuro
+
             BeginMode3D(camera);
-                
-                // Linhas de grade para dar noção de profundidade e espaço no cenário
-                DrawGrid(20, 1.0f);
-                
-                // Desenha a mesa de testes (Plataforma Cinza)
-                DrawCubeV(platformPosition, platformSize, GRAY);
-                DrawCubeWiresV(platformPosition, platformSize, DARKGRAY);
-                
-                // Desenha a Bola Física (Esfera Vermelha com linhas guias)
-                DrawSphere(ballPosition, ballRadius, RED);
-                DrawSphereWires(ballPosition, ballRadius, 10, 10, MAROON);
-                
+                // Sol no centro
+                DrawSphere((Vector3){0,0,0}, 1.8f, YELLOW);
+                DrawSphereWires((Vector3){0,0,0}, 1.8f, 16, 16, ORANGE);
+
+                // Grade de referencia
+                //DrawGrid(gridSize, 2.0f);
+		for (int i = -gridSize; i <= gridSize; i+=2){
+
+		DrawLine3D((Vector3){ (float)i, 0, -gridSize}, (Vector3){ (float)i, 0, gridSize}, gridColor);
+		DrawLine3D((Vector3){ -gridSize, 0, (float)i}, (Vector3){ gridSize, 0, (float)i}, gridColor);
+
+		}
+		// Eixo X:
+		DrawCylinderEx((Vector3){ -gridSize, 0.0f, 0.0f }, (Vector3){ gridSize, 0.0f, 0.0f }, 0.05f, 0.05f, 8, RED);
+
+                // Eixo Z:
+                DrawCylinderEx((Vector3){ 0.0f, 0.0f, -gridSize}, (Vector3){ 0.0f, 0.0f, gridSize }, 0.05f, 0.05f, 8, BLUE);
+
+                // Rastro EULER (vermelho, mais grosso)
+                for (int i = 1; i < t_count; i++) {
+                    int curr = (t_idx - i + TRAIL_LENGTH) % TRAIL_LENGTH;
+                    int prev = (curr - 1 + TRAIL_LENGTH) % TRAIL_LENGTH;
+                    DrawLine3D(trail_euler[prev], trail_euler[curr], MAROON);
+                }
+
+                // Rastro RK4 (azul/ciano)
+                for (int i = 1; i < t_count; i++) {
+                    int curr = (t_idx - i + TRAIL_LENGTH) % TRAIL_LENGTH;
+                    int prev = (curr - 1 + TRAIL_LENGTH) % TRAIL_LENGTH;
+                    DrawLine3D(trail_rk4[prev], trail_rk4[curr], SKYBLUE);
+                }
+
+                // Esferas atuais
+                DrawSphere(toRaylib(st_euler.position), 0.6f, RED);
+                DrawSphere(toRaylib(st_rk4.position),   0.6f, BLUE);
+
             EndMode3D();
-            
-            // Interface Textual 2D por cima do 3D
-            DrawText("ENGINE DE FISICA 3D - ONLINE", 10, 10, 20, GREEN);
-            DrawText("Controles da Bola: W, A, S, D [ESPACO para pular]", 10, 40, 16, LIGHTGRAY);
-            DrawText("Controles da Camera: Setas do Teclado", 10, 60, 16, LIGHTGRAY);
-            
-            // Telemetria da Física
-            DrawText(TextFormat("Posicao Y: %.2f", ballPosition.y), 10, 95, 14, WHITE);
-            DrawText(TextFormat("Velocidade X: %.3f", ballVelocity.x), 10, 115, 14, BLUE);
-            DrawText(TextFormat("Velocidade Z: %.3f", ballVelocity.z), 10, 135, 14, ORANGE);
-            
+	    	// Marcadores para o Eixo X (Positivos)
+		for (int i = -gridSize; i <= gridSize; i += 10) {
+	  		Vector3 worldPos = { (float)i, 0.0f, 0.0f };
+    			Vector2 screenPos = GetWorldToScreen(worldPos, camera);
+
+			if (screenPos.x > 0 && i != 0) {
+    				DrawText(TextFormat("%i", i), (int)screenPos.x, (int)screenPos.y, 20, gridColor);
+    			}
+		}
+
+		// Marcadores para o Eixo Z (Positivos)
+		for (int i = -gridSize; i <= gridSize; i += 10) {
+    			Vector3 worldPos = { 0.0f, 0.0f, (float)i };
+    			Vector2 screenPos = GetWorldToScreen(worldPos, camera);
+
+			if (screenPos.x > 0 && i != 0) {
+        			DrawText(TextFormat("%i", i), (int)screenPos.x, (int)screenPos.y, 20, gridColor);
+    			}
+		}
+
+            // ----- UI 2D (texto por cima) -----
+            DrawText("PHOENIX PHYSICS ENGINE", 10, 10, 24, GREEN);
+            DrawText("[ESPACO] Pausar    [R] Reiniciar    Mouse: orbitar camera", 10, 42, 16, LIGHTGRAY);
+
+            // Painel Euler
+            DrawText("EULER (vermelho)", 10, 80, 18, RED);
+            DrawText(TextFormat("Posicao:  %.2f  %.2f  %.2f",
+                st_euler.position.x, st_euler.position.y, st_euler.position.z), 10, 105, 14, WHITE);
+            DrawText(TextFormat("Energia:  %.4f  J", computeEnergy(&st_euler)), 10, 125, 14, WHITE);
+
+            // Painel RK4
+            DrawText("RK4 (azul)", 10, 160, 18, BLUE);
+            DrawText(TextFormat("Posicao:  %.2f  %.2f  %.2f",
+                st_rk4.position.x, st_rk4.position.y, st_rk4.position.z), 10, 185, 14, WHITE);
+            DrawText(TextFormat("Energia:  %.4f  J", computeEnergy(&st_rk4)), 10, 205, 14, WHITE);
+
+            // Legenda explicativa
+            DrawText("Observacao: com passo grande (dt=0.08),", 10, 250, 14, GRAY);
+            DrawText("o Euler ganha energia e espirala para fora.", 10, 268, 14, GRAY);
+            DrawText("O RK4 conserva a orbita eliptica.", 10, 286, 14, GRAY);
+
         EndDrawing();
     }
-    
+
     CloseWindow();
     return 0;
 }
