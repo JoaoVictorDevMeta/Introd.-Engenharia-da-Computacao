@@ -6,29 +6,22 @@
 #include "quaterniom.h"
 
 #define TRAIL_LENGTH 300
-#define DT_PHYSICS   0.08   // Passo GRANDE propositalmente pra evidenciar erro do Euler
 
 // =================================================================
 // LEI DA FISICA: Orbita gravitacional (campo central)
-// F = -GM/r^2, apontando pro centro (0,0,0)
 // =================================================================
 void derivOrbita(const State *state, Derivative *d) {
-    // Taxa de variacao da posicao = velocidade
     d->dPosition = state->velocity;
 
-    // Vetor posicao em relacao ao centro
     Vec3 r = state->position;
     double dist = vec3_length(r);
 
-    // Evita divisao por zero se passar muito perto
     if (dist < 0.5) dist = 0.5;
 
-    // Aceleracao: a = -GM/r^3 * r  (forca sempre puxa pro centro)
     double GM = 800.0;
     Vec3 accel = vec3_scale(r, -GM / (dist * dist * dist));
     d->dVelocity = accel;
 
-    // Sem rotacao por enquanto (particula pontual)
     d->dOrientation = quat_scale(
         quat_mul(quat_from_omega(state->angularVelocity), state->orientation),
         0.5
@@ -37,9 +30,7 @@ void derivOrbita(const State *state, Derivative *d) {
 }
 
 // =================================================================
-// ENERGIA TOTAL (cinetica + potencial) — usada pra medir estabilidade
-// E = 0.5*v^2 - GM/r   (massa = 1)
-// Se o integrador for bom, essa energia deve ficar CONSTANTE.
+// ENERGIA TOTAL (cinetica + potencial)
 // =================================================================
 double computeEnergy(const State *s) {
     double v2 = vec3_dot(s->velocity, s->velocity);
@@ -49,28 +40,21 @@ double computeEnergy(const State *s) {
     return 0.5 * v2 - GM / r;
 }
 
-// =================================================================
-// CONVERSOR: nosso Vec3 (engine) -> Vector3 (Raylib pra desenhar)
-// =================================================================
+// Conversor Vec3 -> Vector3 Raylib
 Vector3 toRaylib(Vec3 v) {
     return (Vector3){(float)v.x, (float)v.y, (float)v.z};
 }
 
-// =================================================================
-// MAIN
-// =================================================================
 int main(void) {
     const int screenW = 1200;
     const int screenH = 800;
-
-    // Variáveis do Grid
     const int gridSize = 50;
     Color gridColor = Fade(GRAY, 0.3);
 
     InitWindow(screenW, screenH, "Phoenix Engine — Euler vs RK4");
     SetTargetFPS(60);
 
-    // --- Camera 3D orbital ---
+    // Camera 3D orbital
     Camera3D camera = {0};
     float cameraAngle = 0.0f;
     float cameraDistanceZ = 50.0f;
@@ -80,152 +64,135 @@ int main(void) {
     camera.up         = (Vector3){0.0f, 1.0f,  0.0f};
     camera.fovy       = 60.0f;
     camera.projection = CAMERA_PERSPECTIVE;
-   
-    
-    // --- Estado inicial (IDENTICO pros dois integradores) ---
+
+    // Estados iniciais
     State st_euler = {0};
     State st_rk4   = {0};
 
-    Vec3 pos0 = {18.0, 0.0, 0.0};   // Comeca longe do centro
-    Vec3 vel0 = {0.0, 0.0, 7.5};    // Velocidade tangencial -> orbita!
+    Vec3 pos0 = {18.0, 0.0, 0.0};
+    Vec3 vel0 = {0.0, 0.0, 7.5};
 
     st_euler.position = pos0;  st_euler.velocity = vel0;
     st_euler.orientation = (Quat){1.0, 0.0, 0.0, 0.0};
 
-    st_rk4.position = pos0;  st_rk4.velocity = vel0;
+    st_rk4.position = pos0;    st_rk4.velocity   = vel0;
     st_rk4.orientation = (Quat){1.0, 0.0, 0.0, 0.0};
 
-    // --- Rastro (trail) circular ---
+    // Rastro (trail)
     Vector3 trail_euler[TRAIL_LENGTH] = {0};
     Vector3 trail_rk4[TRAIL_LENGTH]   = {0};
     int t_count = 0;
     int t_idx   = 0;
 
-    int running = 1;   // Pausa com espaco
+    int running = 1;
+    
+    // Configuração de Seletor e Fixed Timestep (60 Hz)
+    int modoIntegracao = 0; // 0 = Ambos, 1 = Euler, 2 = RK4
+    double tempoAcumulado = 0.0;
+    const double dt_fixo = 1.0 / 60.0;
 
     while (!WindowShouldClose()) {
-        // ----- INPUT -----
+        // ----- INPUTS -----
         if (IsKeyPressed(KEY_SPACE)) running = !running;
-        if (IsKeyPressed(KEY_R)) {
-            // Reinicia ambos pro estado inicial
+        
+        if (IsKeyPressed(KEY_T)) {
             st_euler.position = pos0;  st_euler.velocity = vel0;
             st_rk4.position   = pos0;  st_rk4.velocity   = vel0;
             t_count = 0;  t_idx = 0;
         }
 
-        // ----- FISICA (passo fixo) -----
-        if (running) {
-            // Varios sub-passos por frame pra suavidade visual
-            int sub = 4;
-            double dt_step = DT_PHYSICS / sub;
+        // Seletor de Integrador (Teclas E / R)
+        if (IsKeyPressed(KEY_E)) modoIntegracao = 1; // Apenas Euler
+        if (IsKeyPressed(KEY_R)) modoIntegracao = 2; // Apenas RK4
+        if (IsKeyPressed(KEY_A)) modoIntegracao = 0; // Ambos
 
-            for (int i = 0; i < sub; i++) {
-                euler(&st_euler, dt_step, derivOrbita);
-                rk4(&st_rk4, dt_step, derivOrbita);
+        // ----- FISICA COM FIXED TIMESTEP (60 Hz) -----
+        if (running) {
+            tempoAcumulado += GetFrameTime();
+
+            while (tempoAcumulado >= dt_fixo) {
+                if (modoIntegracao == 0 || modoIntegracao == 1) {
+                    euler(&st_euler, dt_fixo, derivOrbita);
+                }
+                if (modoIntegracao == 0 || modoIntegracao == 2) {
+                    rk4(&st_rk4, dt_fixo, derivOrbita);
+                }
+                tempoAcumulado -= dt_fixo;
             }
 
-            // Guarda posicao no rastro (buffer circular)
             trail_euler[t_idx] = toRaylib(st_euler.position);
             trail_rk4[t_idx]   = toRaylib(st_rk4.position);
             t_idx = (t_idx + 1) % TRAIL_LENGTH;
             if (t_count < TRAIL_LENGTH) t_count++;
         }
 
-        // ----- CAMERA -----
+        // ----- CÂMERA -----
         Vector2 mouseDelta = GetMouseDelta();
-        if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)){
+        if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) {
             if (mouseDelta.x != 0.0f) {
-                int sinal = (mouseDelta.x > 0) ? 1 : -1;
-                
+                float sinal = (mouseDelta.x > 0) ? 1.0f : -1.0f;
                 cameraAngle += 0.05f * sinal;
                 camera.position.x = camera.target.x + cosf(cameraAngle) * cameraDistanceZ;
                 camera.position.z = camera.target.z + sinf(cameraAngle) * cameraDistanceZ;
-
             }
         }
 
-        // ----- RENDER -----
+        // ----- RENDERIZAÇÃO -----
         BeginDrawing();
-            ClearBackground((Color){5, 5, 15, 255});  // Azul-muito-escuro
+            ClearBackground((Color){5, 5, 15, 255});
 
             BeginMode3D(camera);
-                // Sol no centro
                 DrawSphere((Vector3){0,0,0}, 1.8f, YELLOW);
                 DrawSphereWires((Vector3){0,0,0}, 1.8f, 16, 16, ORANGE);
 
-                // Grade de referencia
-                //DrawGrid(gridSize, 2.0f);
-		for (int i = -gridSize; i <= gridSize; i+=2){
-
-		DrawLine3D((Vector3){ (float)i, 0, -gridSize}, (Vector3){ (float)i, 0, gridSize}, gridColor);
-		DrawLine3D((Vector3){ -gridSize, 0, (float)i}, (Vector3){ gridSize, 0, (float)i}, gridColor);
-
-		}
-		// Eixo X:
-		DrawCylinderEx((Vector3){ -gridSize, 0.0f, 0.0f }, (Vector3){ gridSize, 0.0f, 0.0f }, 0.05f, 0.05f, 8, RED);
-
-                // Eixo Z:
-                DrawCylinderEx((Vector3){ 0.0f, 0.0f, -gridSize}, (Vector3){ 0.0f, 0.0f, gridSize }, 0.05f, 0.05f, 8, BLUE);
-
-                // Rastro EULER (vermelho, mais grosso)
-                for (int i = 1; i < t_count; i++) {
-                    int curr = (t_idx - i + TRAIL_LENGTH) % TRAIL_LENGTH;
-                    int prev = (curr - 1 + TRAIL_LENGTH) % TRAIL_LENGTH;
-                    DrawLine3D(trail_euler[prev], trail_euler[curr], MAROON);
+                for (int i = -gridSize; i <= gridSize; i += 2) {
+                    DrawLine3D((Vector3){(float)i, 0, -gridSize}, (Vector3){(float)i, 0, gridSize}, gridColor);
+                    DrawLine3D((Vector3){-gridSize, 0, (float)i}, (Vector3){gridSize, 0, (float)i}, gridColor);
                 }
 
-                // Rastro RK4 (azul/ciano)
-                for (int i = 1; i < t_count; i++) {
-                    int curr = (t_idx - i + TRAIL_LENGTH) % TRAIL_LENGTH;
-                    int prev = (curr - 1 + TRAIL_LENGTH) % TRAIL_LENGTH;
-                    DrawLine3D(trail_rk4[prev], trail_rk4[curr], SKYBLUE);
+                DrawCylinderEx((Vector3){-gridSize, 0, 0}, (Vector3){gridSize, 0, 0}, 0.05f, 0.05f, 8, RED);
+                DrawCylinderEx((Vector3){0, 0, -gridSize}, (Vector3){0, 0, gridSize}, 0.05f, 0.05f, 8, BLUE);
+
+                if (modoIntegracao == 0 || modoIntegracao == 1) {
+                    for (int i = 1; i < t_count; i++) {
+                        int curr = (t_idx - i + TRAIL_LENGTH) % TRAIL_LENGTH;
+                        int prev = (curr - 1 + TRAIL_LENGTH) % TRAIL_LENGTH;
+                        DrawLine3D(trail_euler[prev], trail_euler[curr], MAROON);
+                    }
+                    DrawSphere(toRaylib(st_euler.position), 0.6f, RED);
                 }
 
-                // Esferas atuais
-                DrawSphere(toRaylib(st_euler.position), 0.6f, RED);
-                DrawSphere(toRaylib(st_rk4.position),   0.6f, BLUE);
+                if (modoIntegracao == 0 || modoIntegracao == 2) {
+                    for (int i = 1; i < t_count; i++) {
+                        int curr = (t_idx - i + TRAIL_LENGTH) % TRAIL_LENGTH;
+                        int prev = (curr - 1 + TRAIL_LENGTH) % TRAIL_LENGTH;
+                        DrawLine3D(trail_rk4[prev], trail_rk4[curr], SKYBLUE);
+                    }
+                    DrawSphere(toRaylib(st_rk4.position), 0.6f, BLUE);
+                }
 
             EndMode3D();
-	    	// Marcadores para o Eixo X (Positivos)
-		for (int i = -gridSize; i <= gridSize; i += 10) {
-	  		Vector3 worldPos = { (float)i, 0.0f, 0.0f };
-    			Vector2 screenPos = GetWorldToScreen(worldPos, camera);
 
-			if (screenPos.x > 0 && i != 0) {
-    				DrawText(TextFormat("%i", i), (int)screenPos.x, (int)screenPos.y, 20, gridColor);
-    			}
-		}
-
-		// Marcadores para o Eixo Z (Positivos)
-		for (int i = -gridSize; i <= gridSize; i += 10) {
-    			Vector3 worldPos = { 0.0f, 0.0f, (float)i };
-    			Vector2 screenPos = GetWorldToScreen(worldPos, camera);
-
-			if (screenPos.x > 0 && i != 0) {
-        			DrawText(TextFormat("%i", i), (int)screenPos.x, (int)screenPos.y, 20, gridColor);
-    			}
-		}
-
-            // ----- UI 2D (texto por cima) -----
+            // HUD 2D
             DrawText("PHOENIX PHYSICS ENGINE", 10, 10, 24, GREEN);
-            DrawText("[ESPACO] Pausar    [R] Reiniciar    Mouse: orbitar camera", 10, 42, 16, LIGHTGRAY);
+            DrawText("[ESPACO] Pausar | [T] Reset | [E] So Euler | [R] So RK4 | [A] Ambos | FPS:", 10, 42, 16, LIGHTGRAY);
+            DrawText(TextFormat("%d", GetFPS()), 680, 42, 16, GREEN);
 
-            // Painel Euler
-            DrawText("EULER (vermelho)", 10, 80, 18, RED);
-            DrawText(TextFormat("Posicao:  %.2f  %.2f  %.2f",
-                st_euler.position.x, st_euler.position.y, st_euler.position.z), 10, 105, 14, WHITE);
-            DrawText(TextFormat("Energia:  %.4f  J", computeEnergy(&st_euler)), 10, 125, 14, WHITE);
+            const char* txtModo = (modoIntegracao == 0) ? "AMBOS" : (modoIntegracao == 1) ? "EULER" : "RK4";
+            DrawText(TextFormat("Metodo Ativo: %s", txtModo), 10, 65, 16, YELLOW);
 
-            // Painel RK4
-            DrawText("RK4 (azul)", 10, 160, 18, BLUE);
-            DrawText(TextFormat("Posicao:  %.2f  %.2f  %.2f",
-                st_rk4.position.x, st_rk4.position.y, st_rk4.position.z), 10, 185, 14, WHITE);
-            DrawText(TextFormat("Energia:  %.4f  J", computeEnergy(&st_rk4)), 10, 205, 14, WHITE);
+            if (modoIntegracao == 0 || modoIntegracao == 1) {
+                DrawText("EULER (vermelho)", 10, 95, 18, RED);
+                DrawText(TextFormat("Pos: %.2f %.2f %.2f | Energia: %.4f J",
+                    st_euler.position.x, st_euler.position.y, st_euler.position.z, computeEnergy(&st_euler)), 10, 120, 14, WHITE);
+            }
 
-            // Legenda explicativa
-            DrawText("Observacao: com passo grande (dt=0.08),", 10, 250, 14, GRAY);
-            DrawText("o Euler ganha energia e espirala para fora.", 10, 268, 14, GRAY);
-            DrawText("O RK4 conserva a orbita eliptica.", 10, 286, 14, GRAY);
+            if (modoIntegracao == 0 || modoIntegracao == 2) {
+                int posY = (modoIntegracao == 2) ? 95 : 150;
+                DrawText("RK4 (azul)", 10, posY, 18, BLUE);
+                DrawText(TextFormat("Pos: %.2f %.2f %.2f | Energia: %.4f J",
+                    st_rk4.position.x, st_rk4.position.y, st_rk4.position.z, computeEnergy(&st_rk4)), 10, posY + 25, 14, WHITE);
+            }
 
         EndDrawing();
     }
