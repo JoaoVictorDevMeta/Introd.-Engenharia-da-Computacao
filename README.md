@@ -54,7 +54,8 @@ Como o projeto utiliza múltiplos arquivos fonte organizados em pastas, a compil
 
 3. Compilando pelo w64devkit:
     ```bash
-    gcc src/main.c -o main.exe -lraylib -lopengl32 -lgdi32 -lwinmm
+    gcc -o phoenix.exe src/*.c -Iinclude -lraylib -lopengl32 -lgdi32 -lwinmm
+    ./phoenix.exe
     ```
 
 ### Passo a Passo no Linux (Ubuntu/Debian)

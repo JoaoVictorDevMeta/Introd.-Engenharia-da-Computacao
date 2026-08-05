@@ -12,7 +12,7 @@
 // Assim como em Cálculo Vetorial, aqui será representado por x, y e z.
 // Poderia-se utilizar um array, mas pela quantidade exata de 3 elementos
 // e pela clareza de leitura, a struct é mais adequada.
-// Double para precisão necessário.
+
 typedef struct {
     double x, y, z;
 } Vec3;

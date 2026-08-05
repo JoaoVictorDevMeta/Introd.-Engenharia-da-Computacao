@@ -18,7 +18,7 @@
 | Testes com asserts (entregável original pedia biblioteca "100% testada com asserts") | ✅ | `tests/testMath.c` |
 
 
-## Dupla B — Dinâmica e Integradores (o diferencial do projeto) ✅
+## Dupla B — Dinâmica e Integradores
 
 | Item | Status | Observação |
 | -- | -- | -- |
