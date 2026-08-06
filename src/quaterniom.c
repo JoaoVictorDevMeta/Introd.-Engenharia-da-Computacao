@@ -37,8 +37,7 @@ Quat quat_normalize(Quat q) {
     if (len < 1e-12) {
         return (Quat){1.0, 0.0, 0.0, 0.0}; 
     }
-    double inv_len = 1.0 / len;
-    return (Quat){q.w * inv_len, q.x * inv_len, q.y * inv_len, q.z * inv_len};
+    return (Quat){q.w / len, q.x / len, q.y / len, q.z / len};
 }
 
 Quat quat_from_omega(Vec3 omega) {
