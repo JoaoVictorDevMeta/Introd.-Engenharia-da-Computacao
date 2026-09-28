@@ -163,5 +163,15 @@ flowchart TD
 - [Video Game Physics Tutorial - Part I](https://www.toptal.com/developers/game/video-game-physics-part-i-an-introduction-to-rigid-body-dynamics)
 - [Produto Escalar e Vetorial em C](https://labex.io/pt/tutorials/c-compute-the-dot-and-cross-product-in-c-435158)
 
-##  Agradecimentos
+## Autores
 
+- Belchior Dias — [@Zurcaid](https://github.com/Zurcaid)
+- João Victor Gouveia — [@JoaoVictorDevMeta](https://github.com/JoaoVictorDevMeta)
+- Antonio Oliva — [@AntonioOliva27](https://github.com/AntonioOliva27)
+- Pedro Luis — [@Pedrolk647](https://github.com/Pedrolk647)
+- MiguelEulerQL — [@MiguelEulerQL](https://github.com/MiguelEulerQL)
+- Filipe Rodrigues - [@filipe-msc](https://github.com/filipe-msc)
+
+## Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
